@@ -23,6 +23,14 @@ passwords, API keys, private notes or other sensitive information.
 - **Aurora colours, background and other settings:** edit `public/config.js`.
   Add `?dev` to the site URL to try colour schemes live and copy the result.
 
+## Caching: bump the version after CSS or JS changes
+
+The site sits behind Cloudflare, which keeps copies of `style.css` and the `.js`
+files for up to 4 hours. After changing any of them, raise the `?v=` number on
+every stylesheet and script link in `public/index.html` (for example `?v=2` to
+`?v=3`) so visitors get the new files straight away. Editing `events.txt` or
+`index.html` alone needs no version bump.
+
 ## Preview locally
 
 From the repository directory:
