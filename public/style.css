@@ -90,20 +90,34 @@ body {
 }
 
 /* --- events --- */
-/* One event fills the width; more split it evenly, wrapping after 4. */
+/* Every card is the same width (4 per row on desktop, 2 on tablets, 1 on
+   phones), so rows line up. Upcoming events sit centred; past events fill
+   rows from the left. */
 .events {
   display: grid;
   gap: calc(var(--gap) * 2);
 }
 
 .event-grid {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--gap);
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(max(220px, (100% - 3 * var(--gap)) / 4), 1fr)
-  );
-  align-items: start;
+  align-items: flex-start;
+}
+
+.event-grid.upcoming { justify-content: center; }
+
+.event-grid > * {
+  flex: 0 0 calc((100% - 3 * var(--gap)) / 4);
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .event-grid > * { flex-basis: calc((100% - var(--gap)) / 2); }
+}
+
+@media (max-width: 560px) {
+  .event-grid > * { flex-basis: 100%; }
 }
 
 .event {
@@ -129,6 +143,13 @@ body {
 }
 
 .event[open] summary::before { content: "-"; }
+
+/* Room for two-line names, so dates line up across a row. */
+.event .name { min-height: 2.6em; }
+
+@media (max-width: 560px) {
+  .event .name { min-height: 0; }
+}
 
 .event .date { color: var(--dim); }
 
@@ -174,8 +195,8 @@ body {
 
 .event .tickets-note { color: var(--dim); }
 
-.events-empty {
-  grid-column: 1 / -1;
+.event-grid > .events-empty {
+  flex-basis: 100%;
   margin: 0;
   text-align: center;
   color: var(--dim);

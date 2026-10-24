@@ -56,8 +56,8 @@
     const upcoming = events.filter((ev) => !isPast(ev)).sort(latestFirst);
     const past = events.filter(isPast).sort(latestFirst);
 
-    const upcomingGrid = el("div", "event-grid");
-    const pastGrid = el("div", "event-grid");
+    const upcomingGrid = el("div", "event-grid upcoming");
+    const pastGrid = el("div", "event-grid past");
     if (!upcoming.length) upcomingGrid.append(el("p", "events-empty", "more soon"));
     root.append(upcomingGrid);
     if (past.length) root.append(pastGrid);
