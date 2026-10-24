@@ -1,0 +1,28 @@
+# nuyina events
+#
+# How to add an event:
+#   line 1  event name
+#   line 2  date as DD.MM.YYYY
+#   then    one artist per line
+#   and     "tickets:" followed by the ticket link, on the same line or the
+#           next one (optional; write TBC if tickets aren't on sale yet)
+#
+# Leave a blank line between events. Lines starting with # are ignored.
+# Events are sorted by date automatically, and past events are hidden.
+
+nuyina at gateway
+19.12.2026
+tickets: https://www.gatewayfestival.com.au/tickets
+amphi
+venus flytrap
+billus
+rev lon
+art
+
+nuyina pres. lawrence (live)
+03.12.2026
+tickets: tbc
+lawrence (live)
+rev lon
+billy hopes
+art

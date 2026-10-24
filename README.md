@@ -15,6 +15,14 @@ assets in `public/`. Files outside that directory are not served as website
 content, but **everything in this repository is public on GitHub**. Never commit
 passwords, API keys, private notes or other sensitive information.
 
+## Events and colours
+
+- **Events:** edit `public/events.txt`. The format is explained at the top of the
+  file: name, date (DD.MM.YYYY), one artist per line, and an optional
+  `tickets:` link. Events sort by date and disappear once their date has passed.
+- **Aurora colours, background and other settings:** edit `public/config.js`.
+  Add `?dev` to the site URL to try colour schemes live and copy the result.
+
 ## Preview locally
 
 From the repository directory:
