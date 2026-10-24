@@ -49,17 +49,17 @@
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const upcoming = events
-      .filter((ev) => !cfg.hidePastEvents || !ev.when || ev.when >= today)
+    // Upcoming soonest first, then past events newest first.
+    const isPast = (ev) => ev.when && ev.when < today;
+    const upcoming = events.filter((ev) => !isPast(ev))
       .sort((a, b) => (a.when ?? Infinity) - (b.when ?? Infinity));
+    const past = events.filter(isPast).sort((a, b) => b.when - a.when);
 
-    if (!upcoming.length) {
-      root.append(el("p", "events-empty", "more soon"));
-      return;
-    }
+    if (!upcoming.length) root.append(el("p", "events-empty", "more soon"));
 
-    for (const ev of upcoming) {
-      const details = el("details", "event");
+    for (const ev of [...upcoming, ...past]) {
+      const done = isPast(ev);
+      const details = el("details", done ? "event past" : "event");
       details.name = "events";
 
       const summary = el("summary");
@@ -72,9 +72,10 @@
       body.append(lineup);
 
       // A link gets a button; anything else (e.g. TBC) shows as plain text.
-      if (ev.tickets && !/^https?:\/\//i.test(ev.tickets)) {
+      // Past events keep their date and lineup but drop the tickets line.
+      if (!done && ev.tickets && !/^https?:\/\//i.test(ev.tickets)) {
         body.append(el("span", "tickets-note", `tickets ${ev.tickets.toLowerCase()}`));
-      } else if (ev.tickets) {
+      } else if (!done && ev.tickets) {
         const a = el("a", "tickets", "tickets");
         a.href = ev.tickets;
         a.target = "_blank";

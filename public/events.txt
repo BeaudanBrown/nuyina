@@ -8,7 +8,8 @@
 #           next one (optional; write TBC if tickets aren't on sale yet)
 #
 # Leave a blank line between events. Lines starting with # are ignored.
-# Events are sorted by date automatically, and past events are hidden.
+# Events are sorted by date automatically. Past events stay listed (in grey)
+# with their date and lineup; their ticket link is hidden once the date passes.
 
 nuyina at gateway
 19.12.2026
@@ -25,4 +26,44 @@ tickets: tbc
 lawrence (live)
 rev lon
 billy hopes
+art
+
+nuyina afterhours
+31.05.2026
+sa pa (dj)
+alex albrecht (live)
+bex
+séarlait
+art
+billy hopes
+
+nuyina afterhours
+01.03.2026
+tickets: https://events.humanitix.com/nuyina-after-hours
+dj dustin (giegling)
+earl grey + steve
+pjenne
+rev lon
+billus + cash
+art + billy hopes
+
+nuyina outdoors
+13.12.2025
+pjenne
+dj earl grey + steve
+billus
+billy hopes + art
+
+nuyina outdoors
+22.03.2025
+hannah d
+rev lon
+art
+billy hopes
+
+nuyina outdoors
+27.09.2024
+cash
+bex
+billus
 art

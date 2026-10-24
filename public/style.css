@@ -127,6 +127,9 @@ body {
 
 .event .date { color: var(--dim); }
 
+/* Past events stay listed for the history, in grey. */
+.event.past .name { color: var(--dim); }
+
 .event summary:hover .name,
 .event summary:focus-visible .name { color: var(--accent); }
 

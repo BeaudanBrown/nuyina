@@ -17,8 +17,5 @@ window.NUYINA = {
   background: "#ffffff",
 
   // Events and lineups live in events.txt (plain text, instructions inside).
-  eventsFile: "events.txt",
-
-  // Hide events once their date has passed. Set to false to keep them listed.
-  hidePastEvents: true
+  eventsFile: "events.txt"
 };
