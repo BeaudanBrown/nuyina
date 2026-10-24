@@ -8,7 +8,8 @@
 #           next one (optional; write TBC if tickets aren't on sale yet)
 #
 # Leave a blank line between events. Lines starting with # are ignored.
-# Events are sorted by date automatically. Past events stay listed (in grey)
+# Events are sorted automatically, latest first. Past events stay listed (in grey)
+# on their own rows below upcoming ones,
 # with their date and lineup; their ticket link is hidden once the date passes.
 
 nuyina at gateway

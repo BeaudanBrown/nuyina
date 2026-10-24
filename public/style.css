@@ -93,6 +93,11 @@ body {
 /* One event fills the width; more split it evenly, wrapping after 4. */
 .events {
   display: grid;
+  gap: calc(var(--gap) * 2);
+}
+
+.event-grid {
+  display: grid;
   gap: var(--gap);
   grid-template-columns: repeat(
     auto-fit,

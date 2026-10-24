@@ -49,13 +49,18 @@
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Upcoming soonest first, then past events newest first.
+    // Latest first. Upcoming and past events each get their own grid, so
+    // past events always start on a new row.
     const isPast = (ev) => ev.when && ev.when < today;
-    const upcoming = events.filter((ev) => !isPast(ev))
-      .sort((a, b) => (a.when ?? Infinity) - (b.when ?? Infinity));
-    const past = events.filter(isPast).sort((a, b) => b.when - a.when);
+    const latestFirst = (a, b) => (b.when ?? Infinity) - (a.when ?? Infinity);
+    const upcoming = events.filter((ev) => !isPast(ev)).sort(latestFirst);
+    const past = events.filter(isPast).sort(latestFirst);
 
-    if (!upcoming.length) root.append(el("p", "events-empty", "more soon"));
+    const upcomingGrid = el("div", "event-grid");
+    const pastGrid = el("div", "event-grid");
+    if (!upcoming.length) upcomingGrid.append(el("p", "events-empty", "more soon"));
+    root.append(upcomingGrid);
+    if (past.length) root.append(pastGrid);
 
     for (const ev of [...upcoming, ...past]) {
       const done = isPast(ev);
@@ -84,7 +89,7 @@
       }
 
       details.append(summary, body);
-      root.append(details);
+      (done ? pastGrid : upcomingGrid).append(details);
     }
   }
 
