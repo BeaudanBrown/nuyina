@@ -1,6 +1,10 @@
-// ASCII aurora australis, rendered on the GPU (WebGL2).
-// The shader computes aurora brightness per character cell, picks a glyph from
-// a pre-rendered atlas of the character ramp, and colours it from the palette.
+// ASCII aurora australis, rendered on the GPU (WebGL2) in two passes:
+//   1. FIELD: one fragment per character cell computes the aurora brightness
+//      into a tiny texture (cols x rows). This is where the noise maths lives.
+//   2. GLYPH: one fragment per screen pixel looks up its cell's brightness,
+//      picks a glyph from a pre-rendered atlas and colours it. Cheap.
+// Each cell covers ~100-200 pixels, so doing the noise once per cell instead
+// of once per pixel cuts the heavy work by that much.
 (() => {
   const RAMP = " .,:;-~=+*x#%@";
   const MAX_COLOURS = 8;
@@ -38,19 +42,12 @@
       gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
     }`;
 
-  const FRAG = `#version 300 es
+  const FIELD = `#version 300 es
     precision highp float;
-    uniform vec2 uCell;      // cell size in device px
     uniform vec2 uGrid;      // cols, rows
-    uniform vec2 uOffset;    // px offset that centres the grid
+    uniform float uAspect;   // grid width / height in pixels
     uniform float uTime;
-    uniform sampler2D uAtlas;
-    uniform float uGlyphs;
-    uniform vec3 uPal[${MAX_COLOURS}];
-    uniform int uPalN;
-    uniform vec3 uBg;
-    uniform bool uLight;
-    out vec4 outColor;
+    out vec4 outField;
 
     float hash(vec2 p) {
       p = fract(p * vec2(123.34, 456.21));
@@ -69,13 +66,6 @@
       float v = 0.0, a = 0.5;
       for (int i = 0; i < 4; i++) { v += a * noise(p); p *= 2.03; a *= 0.5; }
       return v;
-    }
-
-    vec3 palette(float t) {
-      t = clamp(t, 0.0, 1.0) * float(uPalN - 1);
-      int i = int(floor(t));
-      int j = min(i + 1, uPalN - 1);
-      return mix(uPal[i], uPal[j], fract(t));
     }
 
     // One aurora curtain: a folding, drifting base line with a sharp lower
@@ -104,16 +94,9 @@
     }
 
     void main() {
-      vec2 fc = gl_FragCoord.xy - uOffset;
-      vec2 cell = floor(fc / uCell);
-      if (any(lessThan(cell, vec2(0))) || any(greaterThanEqual(cell, uGrid))) {
-        outColor = vec4(uBg, 1.0);
-        return;
-      }
-      vec2 inCell = fract(fc / uCell);
+      vec2 cell = floor(gl_FragCoord.xy);
       vec2 p = (cell + 0.5) / uGrid;                      // 0..1, y up
-      float aspect = (uGrid.x * uCell.x) / (uGrid.y * uCell.y);
-      vec2 q = vec2(p.x * aspect, p.y);
+      vec2 q = vec2(p.x * uAspect, p.y);
       float t = uTime;
 
       float a = curtain(q, t,        1.7, 0.16, 0.45, 1.2)
@@ -123,6 +106,40 @@
       a *= smoothstep(0.0, 0.06, p.y) * (1.0 - 0.7 * smoothstep(0.75, 1.0, p.y));
       a += (hash(cell + floor(t * 8.0)) - 0.5) * 0.06;     // glyph flicker
       a = clamp((a - 0.06) / 0.94, 0.0, 1.0);               // let the sky go dark
+      outField = vec4(a, 0.0, 0.0, 1.0);
+    }`;
+
+  const GLYPH = `#version 300 es
+    precision highp float;
+    uniform vec2 uCell;      // cell size in device px
+    uniform vec2 uGrid;      // cols, rows
+    uniform vec2 uOffset;    // px offset that centres the grid
+    uniform sampler2D uField;
+    uniform sampler2D uAtlas;
+    uniform float uGlyphs;
+    uniform vec3 uPal[${MAX_COLOURS}];
+    uniform int uPalN;
+    uniform vec3 uBg;
+    uniform bool uLight;
+    out vec4 outColor;
+
+    vec3 palette(float t) {
+      t = clamp(t, 0.0, 1.0) * float(uPalN - 1);
+      int i = int(floor(t));
+      int j = min(i + 1, uPalN - 1);
+      return mix(uPal[i], uPal[j], fract(t));
+    }
+
+    void main() {
+      vec2 fc = gl_FragCoord.xy - uOffset;
+      vec2 cell = floor(fc / uCell);
+      if (any(lessThan(cell, vec2(0))) || any(greaterThanEqual(cell, uGrid))) {
+        outColor = vec4(uBg, 1.0);
+        return;
+      }
+      vec2 inCell = fract(fc / uCell);
+      vec2 p = (cell + 0.5) / uGrid;
+      float a = texelFetch(uField, ivec2(cell), 0).r;
 
       float gi = floor(pow(a, 0.8) * (uGlyphs - 1.0) + 0.5);
       vec2 auv = vec2((gi + inCell.x) / uGlyphs, 1.0 - inCell.y);
@@ -141,29 +158,45 @@
     return s;
   }
 
-  const prog = gl.createProgram();
-  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
-  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
-  gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
-  gl.useProgram(prog);
+  function program(frag, names) {
+    const prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, frag));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    const u = {};
+    for (const name of names) u[name] = gl.getUniformLocation(prog, name);
+    return { prog, u };
+  }
+
+  const field = program(FIELD, ["uGrid", "uAspect", "uTime"]);
+  const glyph = program(GLYPH, ["uCell", "uGrid", "uOffset", "uField", "uAtlas", "uGlyphs",
+                                "uPal", "uPalN", "uBg", "uLight"]);
   gl.bindVertexArray(gl.createVertexArray());
 
-  const u = {};
-  for (const name of ["uCell", "uGrid", "uOffset", "uTime", "uAtlas", "uGlyphs", "uPal", "uPalN", "uBg", "uLight"]) {
-    u[name] = gl.getUniformLocation(prog, name);
-  }
-  gl.uniform3fv(u.uBg, bg);
-  gl.uniform1i(u.uLight, light);
-  gl.uniform1f(u.uGlyphs, RAMP.length);
-  gl.uniform1i(u.uAtlas, 0);
+  gl.useProgram(glyph.prog);
+  gl.uniform3fv(glyph.u.uBg, bg);
+  gl.uniform1i(glyph.u.uLight, light);
+  gl.uniform1f(glyph.u.uGlyphs, RAMP.length);
+  gl.uniform1i(glyph.u.uAtlas, 0);
+  gl.uniform1i(glyph.u.uField, 1);
+  gl.uniform1i(glyph.u.uPalN, MAX_COLOURS);
 
-  const atlasTex = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, atlasTex);
-  for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST],
-                        [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) {
-    gl.texParameteri(gl.TEXTURE_2D, k, v);
+  function texture(unit) {
+    const tex = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST],
+                          [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) {
+      gl.texParameteri(gl.TEXTURE_2D, k, v);
+    }
+    return tex;
   }
+
+  const atlasTex = texture(0);
+  const fieldTex = texture(1);   // one texel per character cell, rendered each frame
+  const fieldFbo = gl.createFramebuffer();
+  let cols = 0, rows = 0;
 
   const font = { family: "IBM Plex Mono", size: 12 };
   let cellW = 8, cellH = 16;
@@ -188,6 +221,7 @@
     ctx.textBaseline = "middle";
     [...RAMP].forEach((ch, i) => ctx.fillText(ch, cellW * (i + 0.5), cellH / 2));
 
+    gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, atlasTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
     resize();
@@ -200,11 +234,37 @@
     if (!w || !h) return;
     canvas.width = w;
     canvas.height = h;
-    gl.viewport(0, 0, w, h);
-    const cols = Math.floor(w / cellW), rows = Math.floor(h / cellH);
-    gl.uniform2f(u.uCell, cellW, cellH);
-    gl.uniform2f(u.uGrid, cols, rows);
-    gl.uniform2f(u.uOffset, Math.floor((w - cols * cellW) / 2), Math.floor((h - rows * cellH) / 2));
+    cols = Math.max(1, Math.floor(w / cellW));
+    rows = Math.max(1, Math.floor(h / cellH));
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, fieldTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, cols, rows, 0, gl.RED, gl.UNSIGNED_BYTE, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fieldFbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fieldTex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    gl.useProgram(field.prog);
+    gl.uniform2f(field.u.uGrid, cols, rows);
+    gl.uniform1f(field.u.uAspect, (cols * cellW) / (rows * cellH));
+    gl.useProgram(glyph.prog);
+    gl.uniform2f(glyph.u.uCell, cellW, cellH);
+    gl.uniform2f(glyph.u.uGrid, cols, rows);
+    gl.uniform2f(glyph.u.uOffset, Math.floor((w - cols * cellW) / 2), Math.floor((h - rows * cellH) / 2));
+    if (started) draw();   // a resize clears the canvas, so redraw straight away
+  }
+
+  function draw() {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fieldFbo);
+    gl.viewport(0, 0, cols, rows);
+    gl.useProgram(field.prog);
+    gl.uniform1f(field.u.uTime, t + 40.0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.useProgram(glyph.prog);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
   // Palettes of any length (2–8) are resampled to MAX_COLOURS evenly spaced
@@ -226,11 +286,12 @@
     if (!cols) return false;
     palTarget = resample(cols);
     if (instant || !palCurrent) palCurrent = palTarget.slice();
-    gl.uniform3fv(u.uPal, palCurrent);
+    gl.useProgram(glyph.prog);
+    gl.uniform3fv(glyph.u.uPal, palCurrent);
     return true;
   }
 
-  // Ease the live palette toward the target; returns false once settled.
+  // Ease the live palette toward the target.
   function stepPalette(dt) {
     let moving = false;
     const k = 1 - Math.exp(-dt * 4);
@@ -239,10 +300,8 @@
       if (Math.abs(d) > 1e-4) { palCurrent[i] += d * k; moving = true; }
       else palCurrent[i] = palTarget[i];
     }
-    if (moving) gl.uniform3fv(u.uPal, palCurrent);
+    if (moving) { gl.useProgram(glyph.prog); gl.uniform3fv(glyph.u.uPal, palCurrent); }
   }
-
-  gl.uniform1i(u.uPalN, MAX_COLOURS);
 
   const params = new URLSearchParams(location.search);
   if (!(params.has("palette") && setPalette(params.get("palette")))) setPalette(cfg.palette);
@@ -253,20 +312,23 @@
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(canvas);
   new ResizeObserver(resize).observe(canvas);
 
-  let t = 0, last = performance.now();
+  // The aurora drifts slowly, so 30fps looks the same as 60 or 120 for a
+  // fraction of the work. Hidden tabs pause on their own (no rAF callbacks).
+  const FRAME_MS = 1000 / 30;
+  let t = 0, lastDraw = 0, started = false;
   function frame(now) {
-    const dt = Math.min(0.1, (now - last) / 1000);
-    last = now;
-    if (visible) {
-      t += dt * (motion.matches ? 0.05 : 1);
-      stepPalette(motion.matches ? 1 : dt);
-      gl.uniform1f(u.uTime, t + 40.0);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    const elapsed = now - lastDraw;
+    if (visible && elapsed >= FRAME_MS - 1) {   // -1ms of slack for timer jitter
+      const step = Math.min(0.1, elapsed / 1000);
+      lastDraw = now;
+      t += step * (motion.matches ? 0.05 : 1);
+      stepPalette(motion.matches ? 1 : step);
+      draw();
     }
     requestAnimationFrame(frame);
   }
 
   window.Aurora = { setPalette, parsePalette };
 
-  buildAtlas().then(() => requestAnimationFrame(frame));
+  buildAtlas().then(() => { started = true; draw(); requestAnimationFrame(frame); });
 })();
