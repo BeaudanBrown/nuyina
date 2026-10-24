@@ -2,7 +2,7 @@
 
 ## Purpose and layout
 
-This is the public, ready-to-serve static website for **nuyina.com**.
+This is the public, ready-to-serve static website for **nuyina.org**.
 
 - `public/` contains every file intended to be served to visitors.
 - `public/index.html` is the required, nonempty homepage.
@@ -36,7 +36,7 @@ Publication rules:
 - Three releases, including the current one, are retained on the server.
 - Ordinary rollback is a Git revert on `main`; server-only rollback is temporary.
 
-The canonical URL is `https://nuyina.com`; `https://www.nuyina.com` redirects
+The canonical URL is `https://nuyina.org`; `https://www.nuyina.org` redirects
 there. This is conventional static hosting: missing paths return 404, directory
 listings are disabled, and there is no single-page-application fallback.
 

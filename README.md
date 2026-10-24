@@ -1,6 +1,6 @@
 # Nuyina website
 
-The static website for **[nuyina.com](https://nuyina.com)**.
+The static website for **[nuyina.org](https://nuyina.org)**.
 
 ## Updating the site
 
