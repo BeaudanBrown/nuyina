@@ -81,8 +81,11 @@ body {
 }
 
 .pronounce {
-  margin: 4px 0 40px;
+  margin: 6px 0 40px;
   text-align: center;
+  font-size: 0.75em;
+  letter-spacing: 0.15em;
+  padding-left: 0.15em; /* balance trailing letter-spacing */
   color: var(--dim);
 }
 
