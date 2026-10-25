@@ -2,7 +2,8 @@
 #
 # How to add an event:
 #   line 1  event name
-#   line 2  date as DD.MM.YYYY
+#   line 2  venue as "at <venue>" (optional)
+#   next    date as DD.MM.YYYY
 #   then    one artist per line
 #   and     "tickets:" followed by the ticket link, on the same line or the
 #           next one (optional; write TBC if tickets aren't on sale yet)
@@ -22,6 +23,7 @@ rev lon
 art
 
 nuyina pres. lawrence (live)
+at tender
 03.12.2026
 tickets: tbc
 lawrence (live)

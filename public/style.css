@@ -139,7 +139,7 @@ body {
 .event summary::before {
   content: "+";
   color: var(--dim);
-  grid-row: span 2;
+  grid-row: span 3;
 }
 
 .event[open] summary::before { content: "-"; }
@@ -151,10 +151,17 @@ body {
   .event .name { min-height: 0; }
 }
 
+.event .venue { min-height: 1.3em; }
+
+@media (max-width: 560px) {
+  .event .venue:empty { display: none; }
+}
+
 .event .date { color: var(--dim); }
 
 /* Past events stay listed for the history, in grey. */
-.event.past .name { color: var(--dim); }
+.event.past .name,
+.event.past .venue { color: var(--dim); }
 
 .event summary:hover .name,
 .event summary:focus-visible .name { color: var(--accent); }

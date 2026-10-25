@@ -12,7 +12,8 @@
     return n;
   }
 
-  // Blocks separated by blank lines: name, date, then artists and "tickets:".
+  // Blocks separated by blank lines: name, optional "at venue", date, then
+  // artists and "tickets:".
   function parse(text) {
     const events = [];
     const blocks = text
@@ -27,8 +28,13 @@
         if (lines.length) console.warn("events: skipped event with no date:", lines[0]);
         continue;
       }
+      const venue = /^at\s/i.test(lines[1]) ? lines.splice(1, 1)[0] : null;
       const [name, date, ...rest] = lines;
-      const ev = { name, date, lineup: [], tickets: null, when: parseDate(date) };
+      if (!date) {
+        console.warn("events: skipped event with no date:", name);
+        continue;
+      }
+      const ev = { name, venue, date, lineup: [], tickets: null, when: parseDate(date) };
       if (!ev.when) console.warn(`events: "${date}" isn't DD.MM.YYYY (in "${name}")`);
       for (let i = 0; i < rest.length; i++) {
         const m = rest[i].match(/^tickets?\s*:\s*(.*)$/i);
@@ -62,13 +68,19 @@
     root.append(upcomingGrid);
     if (past.length) root.append(pastGrid);
 
+    // Events in a grid without a venue get an empty line, so dates still line up.
+    const hasVenue = (list) => list.some((ev) => ev.venue);
+    const venueRow = { upcoming: hasVenue(upcoming), past: hasVenue(past) };
+
     for (const ev of [...upcoming, ...past]) {
       const done = isPast(ev);
       const details = el("details", done ? "event past" : "event");
       details.name = "events";
 
       const summary = el("summary");
-      summary.append(el("span", "name", ev.name), el("time", "date", ev.date));
+      summary.append(el("span", "name", ev.name));
+      if (venueRow[done ? "past" : "upcoming"]) summary.append(el("span", "venue", ev.venue ?? ""));
+      summary.append(el("time", "date", ev.date));
 
       const body = el("div", "body");
       const lineup = el("ul", "lineup");
