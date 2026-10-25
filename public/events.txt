@@ -14,6 +14,7 @@
 # with their date and lineup; their ticket link is hidden once the date passes.
 
 nuyina at gateway
+at heide sculpture park
 19.12.2026
 tickets: https://www.gatewayfestival.com.au/tickets
 amphi

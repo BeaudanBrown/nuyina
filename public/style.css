@@ -12,8 +12,8 @@
   --dim: #6c7468;
   --line: #1f2620;
   --accent: #b38a58;
-  --venue: #8fa37f;
-  --venue-past: #6f7f63;
+  --venue: #e6cf4f;
+  --venue-past: #b8a24a;
   --font: "IBM Plex Mono", ui-monospace, monospace;
   --font-size: 16px;
   --gap: 24px;
@@ -26,8 +26,8 @@
   --dim: #5f665f;
   --line: #e2e4e0;
   --accent: #8a6436;
-  --venue: #4a6a3e;
-  --venue-past: #6f732f;
+  --venue: #a8860a;
+  --venue-past: #b8950f;
   --panel: #f4f5f2;
 }
 
@@ -155,7 +155,7 @@ body {
   .event .name { min-height: 0; }
 }
 
-/* Venue in a palette green, so it doesn't read as part of the title. */
+/* Venue in gold, so it doesn't read as part of the title. */
 .event .venue { min-height: 1.3em; color: var(--venue); }
 
 @media (max-width: 560px) {
