@@ -255,6 +255,7 @@
   }
 
   function draw() {
+    if (!cols) return;   // canvas has no size yet (e.g. page opened in a background tab)
     gl.bindFramebuffer(gl.FRAMEBUFFER, fieldFbo);
     gl.viewport(0, 0, cols, rows);
     gl.useProgram(field.prog);

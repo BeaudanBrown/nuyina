@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- Only this site's own files may load or run. If you add anything from
+       another site (an embed, a font, analytics), it must be allowed here. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+  <!-- Links to other sites (e.g. tickets) only share "nuyina.org", not the full page address. -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>nuyina</title>
   <meta name="description" content="nuyina — event series. upcoming events and lineups.">
@@ -21,7 +26,7 @@
   <link rel="preload" href="fonts/ibm-plex-mono-latin-400.woff2" as="font" type="font/woff2" crossorigin>
   <!-- Cloudflare caches CSS/JS for hours: bump ?v= on every file below
        whenever any of them changes, so visitors get the new version. -->
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
   <main class="frame">
@@ -35,9 +40,9 @@
     <section class="events" id="events" aria-label="Upcoming events"></section>
   </main>
 
-  <script src="config.js?v=12"></script>
-  <script src="aurora.js?v=12"></script>
-  <script src="palettes.js?v=12"></script>
-  <script src="events.js?v=12"></script>
+  <script src="config.js?v=13"></script>
+  <script src="aurora.js?v=13"></script>
+  <script src="palettes.js?v=13"></script>
+  <script src="events.js?v=13"></script>
 </body>
 </html>
