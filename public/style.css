@@ -143,7 +143,7 @@ body {
 .event summary::before {
   content: "+";
   color: var(--dim);
-  grid-row: span 3;
+  grid-row: span 2;
 }
 
 .event[open] summary::before { content: "-"; }
@@ -153,13 +153,6 @@ body {
 
 @media (max-width: 560px) {
   .event .name { min-height: 0; }
-}
-
-/* Venue in gold, so it doesn't read as part of the title. */
-.event .venue { min-height: 1.3em; color: var(--venue); }
-
-@media (max-width: 560px) {
-  .event .venue:empty { display: none; }
 }
 
 .event .date { color: var(--dim); }
@@ -190,6 +183,12 @@ body {
   list-style: none;
   margin: 0 0 14px;
   padding: 0;
+}
+
+/* Venue in gold, between the lineup and the tickets line. */
+.event .venue {
+  margin: 0 0 14px;
+  color: var(--venue);
 }
 
 .event .lineup li::before {

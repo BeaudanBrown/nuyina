@@ -68,25 +68,22 @@
     root.append(upcomingGrid);
     if (past.length) root.append(pastGrid);
 
-    // Events in a grid without a venue get an empty line, so dates still line up.
-    const hasVenue = (list) => list.some((ev) => ev.venue);
-    const venueRow = { upcoming: hasVenue(upcoming), past: hasVenue(past) };
-
     for (const ev of [...upcoming, ...past]) {
       const done = isPast(ev);
       const details = el("details", done ? "event past" : "event");
       details.name = "events";
 
       const summary = el("summary");
-      summary.append(el("span", "name", ev.name));
-      if (venueRow[done ? "past" : "upcoming"]) summary.append(el("span", "venue", ev.venue ?? ""));
-      summary.append(el("time", "date", ev.date));
+      summary.append(el("span", "name", ev.name), el("time", "date", ev.date));
 
       const body = el("div", "body");
       const lineup = el("ul", "lineup");
       if (!ev.lineup.length) lineup.append(el("li", null, "lineup tba"));
       for (const act of ev.lineup) lineup.append(el("li", null, act));
       body.append(lineup);
+
+      // Venue sits under the lineup, above the tickets line.
+      if (ev.venue) body.append(el("p", "venue", ev.venue));
 
       // A link gets a button; anything else (e.g. TBC) shows as plain text.
       // Past events keep their date and lineup but drop the tickets line.
