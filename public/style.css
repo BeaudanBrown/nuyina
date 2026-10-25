@@ -12,6 +12,8 @@
   --dim: #6c7468;
   --line: #1f2620;
   --accent: #b38a58;
+  --venue: #8fa37f;
+  --venue-past: #6f7f63;
   --font: "IBM Plex Mono", ui-monospace, monospace;
   --font-size: 16px;
   --gap: 24px;
@@ -24,6 +26,8 @@
   --dim: #5f665f;
   --line: #e2e4e0;
   --accent: #8a6436;
+  --venue: #4a6a3e;
+  --venue-past: #6f732f;
   --panel: #f4f5f2;
 }
 
@@ -151,7 +155,8 @@ body {
   .event .name { min-height: 0; }
 }
 
-.event .venue { min-height: 1.3em; }
+/* Venue in a palette green, so it doesn't read as part of the title. */
+.event .venue { min-height: 1.3em; color: var(--venue); }
 
 @media (max-width: 560px) {
   .event .venue:empty { display: none; }
@@ -160,8 +165,8 @@ body {
 .event .date { color: var(--dim); }
 
 /* Past events stay listed for the history, in grey. */
-.event.past .name,
-.event.past .venue { color: var(--dim); }
+.event.past .name { color: var(--dim); }
+.event.past .venue { color: var(--venue-past); }
 
 .event summary:hover .name,
 .event summary:focus-visible .name { color: var(--accent); }
